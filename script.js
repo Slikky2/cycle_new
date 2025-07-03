@@ -1,5 +1,3 @@
-// script.js
-
 function speakText(text) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -42,10 +40,25 @@ document.getElementById("checkButton").addEventListener("click", async () => {
   const status = fertile ? "NOT SAFE" : "SAFE";
 
   messageBox.textContent = "Thinking...";
+  document.body.classList.remove("bg-green-200", "bg-red-200");
+  messageBox.innerHTML = "";
 
   try {
     const funnyMessage = await getFunnyMessage(status);
-    messageBox.textContent = funnyMessage;
+    let emoji = "";
+    if (status === "SAFE") {
+      document.body.classList.add("bg-green-200");
+      emoji = "😄👍";
+    } else {
+      document.body.classList.add("bg-red-200");
+      emoji = "☠️⚠️";
+    }
+
+    messageBox.innerHTML = `
+      <div class="text-4xl mb-2">${emoji}</div>
+      <div>${funnyMessage}</div>
+    `;
+
     speakText(funnyMessage);
   } catch (err) {
     messageBox.textContent = "Something went wrong.";
