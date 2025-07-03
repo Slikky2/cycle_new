@@ -1,3 +1,5 @@
+// script.js
+
 function speakText(text) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -7,8 +9,10 @@ function speakText(text) {
 function isFertileDay(startDate, cycleLength) {
   const today = new Date();
   const start = new Date(startDate);
-  const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % cycleLength;
-  return diffDays >= 10 && diffDays <= 17;
+  const cycleDay = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % cycleLength;
+
+  const ovulationDay = cycleLength - 14; // typical ovulation timing
+  return cycleDay >= (ovulationDay - 5) && cycleDay <= ovulationDay;
 }
 
 async function getFunnyMessage(status) {
@@ -39,20 +43,14 @@ document.getElementById("checkButton").addEventListener("click", async () => {
   const fertile = isFertileDay(startDate, cycleLength);
   const status = fertile ? "NOT SAFE" : "SAFE";
 
+  // Change background color using inline style
+  document.body.style.backgroundColor = status === "SAFE" ? "#d1fae5" : "#fecaca"; // green or red
+
   messageBox.textContent = "Thinking...";
-  document.body.classList.remove("bg-green-200", "bg-red-200");
-  messageBox.innerHTML = "";
 
   try {
     const funnyMessage = await getFunnyMessage(status);
-    let emoji = "";
-    if (status === "SAFE") {
-      document.body.classList.add("bg-green-200");
-      emoji = "😄👍";
-    } else {
-      document.body.classList.add("bg-red-200");
-      emoji = "☠️⚠️";
-    }
+    const emoji = status === "SAFE" ? "😄👍" : "☠️⚠️";
 
     messageBox.innerHTML = `
       <div class="text-4xl mb-2">${emoji}</div>
