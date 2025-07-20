@@ -6,13 +6,19 @@ function speakText(text) {
   speechSynthesis.speak(utterance);
 }
 
-function isFertileDay(startDate, cycleLength) {
+function getCycleDay(startDate, cycleLength) {
   const today = new Date();
   const start = new Date(startDate);
-  const cycleDay = Math.floor((today - start) / (1000 * 60 * 60 * 24)) % cycleLength;
+  return Math.floor((today - start) / (1000 * 60 * 60 * 24)) % cycleLength;
+}
 
-  const ovulationDay = cycleLength - 14; // typical ovulation timing
+function isFertileDay(cycleDay, cycleLength) {
+  const ovulationDay = cycleLength - 14;
   return cycleDay >= (ovulationDay - 5) && cycleDay <= ovulationDay;
+}
+
+function isMenstruationDay(cycleDay) {
+  return cycleDay >= 0 && cycleDay <= 4; // First 5 days
 }
 
 async function getFunnyMessage(status) {
@@ -40,23 +46,46 @@ document.getElementById("checkButton").addEventListener("click", async () => {
 
   speakText("Checking...");
 
-  const fertile = isFertileDay(startDate, cycleLength);
-  const status = fertile ? "NOT SAFE" : "SAFE";
+  const cycleDay = getCycleDay(startDate, cycleLength);
+  const fertile = isFertileDay(cycleDay, cycleLength);
+  const menstruating = isMenstruationDay(cycleDay);
 
-  // Change background color using inline style
-  document.body.style.backgroundColor = status === "SAFE" ? "#d1fae5" : "#fecaca"; // green or red
+  let status = "SAFE";
+  let emoji = "😄👍";
+
+  if (menstruating) {
+    status = "MENSTRUATING";
+    emoji = "🩸🚨";
+    document.body.style.backgroundColor = "#fef2f2"; // light red
+    const msg = "Code Red - Voda!";
+    const aiMsg = await getFunnyMessage(status);
+    messageBox.innerHTML = `
+      <div class="text-4xl mb-2">${emoji}</div>
+      <div class="text-xl font-bold mb-1">${msg}</div>
+      <div>${aiMsg}</div>
+    `;
+    speakText(`${msg}. ${aiMsg}`);
+    return;
+  }
+
+  if (fertile) {
+    status = "NOT SAFE";
+    emoji = "☠️⚠️";
+    document.body.style.backgroundColor = "#fecaca"; // red
+  } else {
+    status = "SAFE";
+    emoji = "😄👍";
+    document.body.style.backgroundColor = "#d1fae5"; // green
+  }
 
   messageBox.textContent = "Thinking...";
 
   try {
     const funnyMessage = await getFunnyMessage(status);
-    const emoji = status === "SAFE" ? "😄👍" : "☠️⚠️";
-
     messageBox.innerHTML = `
       <div class="text-4xl mb-2">${emoji}</div>
       <div>${funnyMessage}</div>
     `;
-
     speakText(funnyMessage);
   } catch (err) {
     messageBox.textContent = "Something went wrong.";
